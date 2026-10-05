@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        header p {
+            color: #7f8c8d;
+        }
+        .auth-forms, .task-manager {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .auth-forms {
+            display: none; /* Initially hidden, shown via JS */
+        }
+        .task-manager {
+            display: none; /* Initially hidden, shown after login */
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.secondary {
+            background-color: #95a5a6;
+        }
+        button.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        button.danger {
+            background-color: #e74c3c;
+        }
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        #task-list {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .task-actions button {
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+        .no-tasks {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Task Manager</h1>
+            <p>Simple task management application</p>
+        </header>
+
+        <!-- Flash messages -->
+        <div id="flash-message" class="flash-message"></div>
+
+        <!-- Auth forms (login/register) -->
+        <div class="auth-forms" id="auth-forms">
+            <div class="tabs">
+                <div class="tab active" data-tab="login">Login</div>
+                <div class="tab" data-tab="register">Register</div>
+            </div>
+
+            <div class="tab-panel active" id="login-panel">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                    <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
+                </form>
+            </div>
+
+            <div class="tab-panel" id="register-panel">
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-username">Username</label>
+                        <input type="text" id="register-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password (must contain @)</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <button type="submit">Register</button>
+                    <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
+                </form>
+            </div>
+        </div>
+        </div>
+
+        <!-- Task manager (shown after login) -->
+        <div class="task-manager" id="task-manager">
+            <h2>My Tasks</h2>
+            <div class="form-group">
+                <label for="task-title">Task Title</label>
+                <input type="text" id="task-title" placeholder="Enter task title">
+            </div>
+            <div class="form-group">
+                <label for="task-content">Task Content (optional)</label>
+                <textarea id="task-content" rows="3" placeholder="Enter task details"></textarea>
+            </div>
+            <button id="add-task-btn">Add Task</button>
+            <div id="task-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // API base URL
+        const API_BASE = '/api';
+
+        // State
+        let currentUserId = null;
+
+        // DOM elements
+        const authForms = document.getElementById('auth-forms');
+        const taskManager = document.getElementById('task-manager');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const flashMessage = document.getElementById('flash-message');
+        const taskList = document.getElementById('task-list');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskTitleInput = document.getElementById('task-title');
+        const taskContentInput = document.getElementById('task-content');
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+                const tabPanelId = tab.getAttribute('data-tab') + '-panel';
+                document.getElementById(tabPanelId).classList.add('active');
+            });
+        });
+
+        // Show/hide forms
+        document.getElementById('show-register').addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelector('[data-tab="register"]').click();
+        });
+        document.getElementById('show-login').addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelector('[data-tab="login"]').click();
+        });
+        // Flash message function
+        function showFlash(message, type = 'error') {
+            flashMessage.textContent = message;
+            flashMessage.className = `flash-message ${type}`;
+            flashMessage.style.display = 'block';
+            setTimeout(() => {
+                flashMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        // API request helper
+        async function apiRequest(endpoint, options = {}) {
+            const url = API_BASE + endpoint;
+            const config = {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                body: options.body ? JSON.stringify(options.body) : undefined,
+                credentials: 'same-origin'
+            };
+
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+                return { success: true, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        // Login handler
+        loginForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            const result = await apiRequest('/login', {
+                method: 'POST',
+                body: { username, password }
+            });
+
+            if (result.success) {
+                currentUserId = result.data.user_id;
+                authForms.style.display = 'none';
+                taskManager.style.display = 'block';
+                showFlash('Login successful!', 'success');
+                loadTasks();
+            } else {
+                showFlash(result.error || 'Login failed');
+            }
+            loginForm.reset();
+        });
+
+        // Register handler
+        registerForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+
+            const result = await apiRequest('/register', {
+                method: 'POST',
+                body: { username, password }
+            });
+
+            if (result.success) {
+                showFlash('Registration successful! Please login.', 'success');
+                document.querySelector('[data-tab="login"]').click();
+                registerForm.reset();
+            } else {
+                showFlash(result.error || 'Registration failed');
+            }
+        });
+        // Add task handler
+        addTaskBtn.addEventListener('click', async () => {
+            const title = taskTitleInput.value.trim();
+            const content = taskContentInput.value.trim();
+
+            if (!title) {
+                showFlash('Task title is required');
+                return;
+            }
+
+            const result = await apiRequest('/tasks', {
+                method: 'POST',
+                body: { user_id: currentUserId, title, content }
+            });
+
+            if (result.success) {
+                showFlash('Task added successfully!', 'success');
+                taskTitleInput.value = '';
+                taskContentInput.value = '';
+                loadTasks();
+            } else {
+                showFlash(result.error || 'Failed to add task');
+            }
+        });
+        // Load tasks
+        async function loadTasks() {
+            taskList.innerHTML = '<div class="loading">Loading tasks...</div>';
+            
+            const result = await apiRequest(`/tasks?user_id=${currentUserId}`);
+            
+            if (result.success) {
+                renderTasks(result.data.tasks);
+            } else {
+                taskList.innerHTML = `<div class="no-tasks">Error loading tasks: ${result.error}</div>`;
+            }
+        }
+        // Render tasks
+        function renderTasks(tasks) {
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<div class="no-tasks">No tasks yet. Add one above!</div>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Content</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tasks.map(task => `
+                        <tr>
+                            <td>${escapeHtml(task.title)}</td>
+                            <td>${escapeHtml(task.content || '')}</td>
+                            <td>${new Date(task.created_at).toLocaleString()}</td>
+                            <td class="task-actions">
+                                <button class="danger" data-id="${task.id}">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+
+            taskList.innerHTML = '';
+            taskList.appendChild(table);
+
+            // Add event listeners to delete buttons
+            taskList.querySelectorAll('.task-actions button[data-id]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const taskId = parseInt(btn.getAttribute('data-id'));
+                    if (!confirm('Are you sure you want to delete this task?')) return;
+
+                    const result = await apiRequest(`/tasks/${taskId}`, {
+                        method: 'DELETE',
+                        body: { user_id: currentUserId }
+                    });
+
+                    if (result.success) {
+                        showFlash('Task deleted successfully!', 'success');
+                        loadTasks();
+                    } else {
+                        showFlash(result.error || 'Failed to delete task');
+                    }
+                });
+            });
+        }
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Initialize: show auth forms, hide task manager
+        authForms.style.display = 'block';
+        taskManager.style.display = 'none';
+    </script>
+</body>
+</html>
