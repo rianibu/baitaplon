@@ -1,0 +1,108 @@
+use axum::{
+    extract::{State, Path, Query},
+    http::StatusCode,
+    Json,
+};
+use serde_json::json;
+use crate::models::task::Task;
+use crate::AppState;
+
+#[derive(serde::Deserialize)]
+pub struct CreateTaskPayload {
+    pub user_id: i64,
+    pub title: String,
+    pub content: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct GetTasksPayload {
+    pub user_id: i64,
+}
+
+#[derive(serde::Deserialize)]
+pub struct DeleteTaskPayload {
+    pub user_id: i64,
+}
+
+pub async fn create_task(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateTaskPayload>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    match Task::create(&state.db, payload.user_id, &payload.title, &payload.content).await {
+        Ok(task) => (
+            StatusCode::CREATED,
+            Json(json!({
+                "success": true,
+                "task": task
+            })),
+        ),
+        Err(e) => {
+            eprintln!("Failed to create task: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "error": "Failed to create task"
+                })),
+            )
+        }
+    }
+}
+
+pub async fn get_tasks(
+    State(state): State<AppState>,
+    Query(payload): Query<GetTasksPayload>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    match Task::get_by_user_id(&state.db, payload.user_id).await {
+        Ok(tasks) => (
+            StatusCode::OK,
+            Json(json!({
+                "success": true,
+                "tasks": tasks
+            })),
+        ),
+        Err(e) => {
+            eprintln!("Failed to fetch tasks: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "error": "Failed to fetch tasks"
+                })),
+            )
+        }
+    }
+}
+
+pub async fn delete_task(
+    State(state): State<AppState>,
+    Path(task_id): Path<i64>,
+    Query(payload): Query<DeleteTaskPayload>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    match Task::delete(&state.db, task_id, payload.user_id).await {
+        Ok(affected) if affected > 0 => (
+            StatusCode::OK,
+            Json(json!({
+                "success": true,
+                "message": "Task deleted"
+            })),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(json!({
+                "success": false,
+                "error": "Task not found or not authorized"
+            })),
+        ),
+        Err(e) => {
+            eprintln!("Failed to delete task: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "error": "Failed to delete task"
+                })),
+            )
+        }
+    }
+}
