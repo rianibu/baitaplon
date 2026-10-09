@@ -24,6 +24,12 @@ pub struct DeleteTaskPayload {
     pub user_id: i64,
 }
 
+#[derive(serde::Deserialize)]
+pub struct UpdateTaskStatusPayload {
+    pub user_id: i64,
+    pub status: String,
+}
+
 pub async fn create_task(
     State(state): State<AppState>,
     Json(payload): Json<CreateTaskPayload>,
@@ -77,7 +83,7 @@ pub async fn get_tasks(
 pub async fn delete_task(
     State(state): State<AppState>,
     Path(task_id): Path<i64>,
-    Query(payload): Query<DeleteTaskPayload>,
+    Json(payload): Json<DeleteTaskPayload>,
 ) -> (StatusCode, Json<serde_json::Value>) {
     match Task::delete(&state.db, task_id, payload.user_id).await {
         Ok(affected) if affected > 0 => (
@@ -101,6 +107,39 @@ pub async fn delete_task(
                 Json(json!({
                     "success": false,
                     "error": "Failed to delete task"
+                })),
+            )
+        }
+    }
+}
+
+pub async fn update_task_status(
+    State(state): State<AppState>,
+    Path(task_id): Path<i64>,
+    Json(payload): Json<UpdateTaskStatusPayload>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    match Task::update_status(&state.db, task_id, payload.user_id, &payload.status).await {
+        Ok(affected) if affected > 0 => (
+            StatusCode::OK,
+            Json(json!({
+                "success": true,
+                "message": "Task status updated"
+            })),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(json!({
+                "success": false,
+                "error": "Task not found or not authorized"
+            })),
+        ),
+        Err(e) => {
+            eprintln!("Failed to update task status: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "error": "Failed to update task status"
                 })),
             )
         }
