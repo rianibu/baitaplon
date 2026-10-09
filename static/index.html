@@ -17,7 +17,7 @@
             line-height: 1.6;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -53,14 +53,15 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
+            font-family: inherit;
         }
-        .form-group input:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
@@ -113,6 +114,12 @@
         .tab-panel.active {
             display: block;
         }
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
         #task-list {
             margin-top: 20px;
         }
@@ -139,6 +146,11 @@
         .task-actions button {
             padding: 6px 10px;
             font-size: 14px;
+        }
+        .status-select {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
         }
         .no-tasks {
             text-align: center;
@@ -194,6 +206,10 @@
                     <div class="form-group">
                         <label for="login-password">Password</label>
                         <input type="password" id="login-password" required>
+                        <label style="font-weight: normal; font-size: 14px; margin-top: 5px; display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" onchange="document.getElementById('login-password').type = this.checked ? 'text' : 'password'" style="width: auto; margin-right: 5px;">
+                            Show Password
+                        </label>
                     </div>
                     <button type="submit">Login</button>
                     <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
@@ -209,17 +225,24 @@
                     <div class="form-group">
                         <label for="register-password">Password (must contain @)</label>
                         <input type="password" id="register-password" required>
+                        <label style="font-weight: normal; font-size: 14px; margin-top: 5px; display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" onchange="document.getElementById('register-password').type = this.checked ? 'text' : 'password'" style="width: auto; margin-right: 5px;">
+                            Show Password
+                        </label>
                     </div>
                     <button type="submit">Register</button>
                     <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
                 </form>
             </div>
         </div>
-        </div>
 
         <!-- Task manager (shown after login) -->
         <div class="task-manager" id="task-manager">
-            <h2>My Tasks</h2>
+            <div class="header-controls">
+                <h2>My Tasks</h2>
+                <button id="logout-btn" class="secondary">Logout</button>
+            </div>
+            
             <div class="form-group">
                 <label for="task-title">Task Title</label>
                 <input type="text" id="task-title" placeholder="Enter task title">
@@ -272,6 +295,15 @@
             e.preventDefault();
             document.querySelector('[data-tab="login"]').click();
         });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            currentUserId = null;
+            authForms.style.display = 'block';
+            taskManager.style.display = 'none';
+            showFlash('Logged out successfully', 'success');
+        });
+
         // Flash message function
         function showFlash(message, type = 'error') {
             flashMessage.textContent = message;
@@ -307,6 +339,7 @@
                 return { success: false, error: error.message };
             }
         }
+        
         // Login handler
         loginForm.addEventListener('submit', async e => {
             e.preventDefault();
@@ -349,6 +382,7 @@
                 showFlash(result.error || 'Registration failed');
             }
         });
+        
         // Add task handler
         addTaskBtn.addEventListener('click', async () => {
             const title = taskTitleInput.value.trim();
@@ -373,6 +407,7 @@
                 showFlash(result.error || 'Failed to add task');
             }
         });
+        
         // Load tasks
         async function loadTasks() {
             taskList.innerHTML = '<div class="loading">Loading tasks...</div>';
@@ -385,6 +420,7 @@
                 taskList.innerHTML = `<div class="no-tasks">Error loading tasks: ${result.error}</div>`;
             }
         }
+        
         // Render tasks
         function renderTasks(tasks) {
             if (tasks.length === 0) {
@@ -398,6 +434,7 @@
                     <tr>
                         <th>Title</th>
                         <th>Content</th>
+                        <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -407,9 +444,16 @@
                         <tr>
                             <td>${escapeHtml(task.title)}</td>
                             <td>${escapeHtml(task.content || '')}</td>
+                            <td>
+                                <select class="status-select" data-id="${task.id}">
+                                    <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="done" ${task.status === 'done' ? 'selected' : ''}>Done</option>
+                                </select>
+                            </td>
                             <td>${new Date(task.created_at).toLocaleString()}</td>
                             <td class="task-actions">
-                                <button class="danger" data-id="${task.id}">Delete</button>
+                                <button class="danger delete-btn" data-id="${task.id}">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -419,8 +463,28 @@
             taskList.innerHTML = '';
             taskList.appendChild(table);
 
+            // Add event listeners to status selects
+            taskList.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', async () => {
+                    const taskId = parseInt(select.getAttribute('data-id'));
+                    const newStatus = select.value;
+                    
+                    const result = await apiRequest(`/tasks/${taskId}/status`, {
+                        method: 'PUT',
+                        body: { user_id: currentUserId, status: newStatus }
+                    });
+
+                    if (result.success) {
+                        showFlash('Task status updated!', 'success');
+                    } else {
+                        showFlash(result.error || 'Failed to update status');
+                        loadTasks(); // reload to revert to old status
+                    }
+                });
+            });
+
             // Add event listeners to delete buttons
-            taskList.querySelectorAll('.task-actions button[data-id]').forEach(btn => {
+            taskList.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const taskId = parseInt(btn.getAttribute('data-id'));
                     if (!confirm('Are you sure you want to delete this task?')) return;
@@ -439,6 +503,7 @@
                 });
             });
         }
+        
         // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const map = {
