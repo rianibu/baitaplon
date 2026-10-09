@@ -35,8 +35,10 @@ pub async fn register(
     }
 
     // Hash password
-    let password_hash = hash(&payload.password, DEFAULT_COST)
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Failed to hash password" }))))?;
+    let password_hash = match hash(&payload.password, DEFAULT_COST) {
+        Ok(h) => h,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "error": "Failed to hash password" }))),
+    };
 
     // Create user in DB
     match User::create(&state.db, &payload.username, &password_hash).await {
