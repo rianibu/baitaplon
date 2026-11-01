@@ -1,3 +1,4 @@
+```mermaid
 %%{init: {'theme': 'dark'}}%%
 erDiagram
 USERS {
@@ -12,3 +13,7 @@ BOOLEAN completed
 INTEGER user_id FK
 }
 USERS ||--o{ TASKS : "sở hữu"
+```
+
+Kết quả Unit test
+![alt text](image.png)
