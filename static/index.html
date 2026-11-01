@@ -329,57 +329,93 @@
 
             try {
                 const response = await fetch(url, config);
-                const data = await response.json();
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // In case server returns non-JSON error
+                }
                 
                 if (!response.ok) {
-                    throw new Error(data.error || `HTTP ${response.status}`);
+                    throw new Error(data.error || `Yêu cầu thất bại (Mã lỗi: ${response.status})`);
                 }
                 return { success: true, data };
             } catch (error) {
-                return { success: false, error: error.message };
+                // Check if network error (fetch failed, offline, connection refused, etc.)
+                let message = error.message;
+                if (!navigator.onLine || error.name === 'TypeError' || error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+                    message = 'Lỗi kết nối mạng: Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại đường truyền hoặc server!';
+                }
+                return { success: false, error: message };
             }
         }
         
         // Login handler
         loginForm.addEventListener('submit', async e => {
             e.preventDefault();
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
 
-            const result = await apiRequest('/login', {
-                method: 'POST',
-                body: { username, password }
-            });
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Loading...';
 
-            if (result.success) {
-                currentUserId = result.data.user_id;
-                authForms.style.display = 'none';
-                taskManager.style.display = 'block';
-                showFlash('Login successful!', 'success');
-                loadTasks();
-            } else {
-                showFlash(result.error || 'Login failed');
+            try {
+                const result = await apiRequest('/login', {
+                    method: 'POST',
+                    body: { username, password }
+                });
+
+                if (result.success) {
+                    currentUserId = result.data.user_id;
+                    authForms.style.display = 'none';
+                    taskManager.style.display = 'block';
+                    showFlash('Đăng nhập thành công!', 'success');
+                    loadTasks();
+                    loginForm.reset();
+                } else {
+                    showFlash(result.error || 'Đăng nhập thất bại');
+                }
+            } catch (error) {
+                showFlash('Lỗi kết nối mạng: Không thể kết nối tới máy chủ. Vui lòng thử lại!', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
-            loginForm.reset();
         });
 
         // Register handler
         registerForm.addEventListener('submit', async e => {
             e.preventDefault();
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+
             const username = document.getElementById('register-username').value;
             const password = document.getElementById('register-password').value;
 
-            const result = await apiRequest('/register', {
-                method: 'POST',
-                body: { username, password }
-            });
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Loading...';
 
-            if (result.success) {
-                showFlash('Registration successful! Please login.', 'success');
-                document.querySelector('[data-tab="login"]').click();
-                registerForm.reset();
-            } else {
-                showFlash(result.error || 'Registration failed');
+            try {
+                const result = await apiRequest('/register', {
+                    method: 'POST',
+                    body: { username, password }
+                });
+
+                if (result.success) {
+                    showFlash('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+                    document.querySelector('[data-tab="login"]').click();
+                    registerForm.reset();
+                } else {
+                    showFlash(result.error || 'Đăng ký thất bại');
+                }
+            } catch (error) {
+                showFlash('Lỗi kết nối mạng: Không thể kết nối tới máy chủ. Vui lòng thử lại!', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
         
@@ -389,22 +425,33 @@
             const content = taskContentInput.value.trim();
 
             if (!title) {
-                showFlash('Task title is required');
+                showFlash('Vui lòng nhập tiêu đề công việc');
                 return;
             }
 
-            const result = await apiRequest('/tasks', {
-                method: 'POST',
-                body: { user_id: currentUserId, title, content }
-            });
+            const originalText = addTaskBtn.textContent;
+            addTaskBtn.disabled = true;
+            addTaskBtn.textContent = 'Loading...';
 
-            if (result.success) {
-                showFlash('Task added successfully!', 'success');
-                taskTitleInput.value = '';
-                taskContentInput.value = '';
-                loadTasks();
-            } else {
-                showFlash(result.error || 'Failed to add task');
+            try {
+                const result = await apiRequest('/tasks', {
+                    method: 'POST',
+                    body: { user_id: currentUserId, title, content }
+                });
+
+                if (result.success) {
+                    showFlash('Thêm công việc thành công!', 'success');
+                    taskTitleInput.value = '';
+                    taskContentInput.value = '';
+                    loadTasks();
+                } else {
+                    showFlash(result.error || 'Thêm công việc thất bại');
+                }
+            } catch (error) {
+                showFlash('Lỗi kết nối mạng: Không thể kết nối tới máy chủ. Vui lòng thử lại!', 'error');
+            } finally {
+                addTaskBtn.disabled = false;
+                addTaskBtn.textContent = originalText;
             }
         });
         
@@ -412,12 +459,19 @@
         async function loadTasks() {
             taskList.innerHTML = '<div class="loading">Loading tasks...</div>';
             
-            const result = await apiRequest(`/tasks?user_id=${currentUserId}`);
-            
-            if (result.success) {
-                renderTasks(result.data.tasks);
-            } else {
-                taskList.innerHTML = `<div class="no-tasks">Error loading tasks: ${result.error}</div>`;
+            try {
+                const result = await apiRequest(`/tasks?user_id=${currentUserId}`);
+                
+                if (result.success) {
+                    renderTasks(result.data.tasks);
+                } else {
+                    taskList.innerHTML = `<div class="no-tasks">Lỗi tải danh sách công việc: ${escapeHtml(result.error)}</div>`;
+                    showFlash(result.error, 'error');
+                }
+            } catch (error) {
+                const netErr = 'Lỗi kết nối mạng: Không thể tải danh sách công việc.';
+                taskList.innerHTML = `<div class="no-tasks">${netErr}</div>`;
+                showFlash(netErr, 'error');
             }
         }
         
@@ -469,16 +523,25 @@
                     const taskId = parseInt(select.getAttribute('data-id'));
                     const newStatus = select.value;
                     
-                    const result = await apiRequest(`/tasks/${taskId}/status`, {
-                        method: 'PUT',
-                        body: { user_id: currentUserId, status: newStatus }
-                    });
+                    select.disabled = true;
+                    
+                    try {
+                        const result = await apiRequest(`/tasks/${taskId}/status`, {
+                            method: 'PUT',
+                            body: { user_id: currentUserId, status: newStatus }
+                        });
 
-                    if (result.success) {
-                        showFlash('Task status updated!', 'success');
-                    } else {
-                        showFlash(result.error || 'Failed to update status');
-                        loadTasks(); // reload to revert to old status
+                        if (result.success) {
+                            showFlash('Cập nhật trạng thái công việc thành công!', 'success');
+                        } else {
+                            showFlash(result.error || 'Cập nhật trạng thái thất bại');
+                            loadTasks(); // reload to revert to old status
+                        }
+                    } catch (error) {
+                        showFlash('Lỗi kết nối mạng: Không thể cập nhật trạng thái công việc!', 'error');
+                        loadTasks();
+                    } finally {
+                        select.disabled = false;
                     }
                 });
             });
@@ -489,16 +552,28 @@
                     const taskId = parseInt(btn.getAttribute('data-id'));
                     if (!confirm('Are you sure you want to delete this task?')) return;
 
-                    const result = await apiRequest(`/tasks/${taskId}`, {
-                        method: 'DELETE',
-                        body: { user_id: currentUserId }
-                    });
+                    const originalText = btn.textContent;
+                    btn.disabled = true;
+                    btn.textContent = 'Loading...';
 
-                    if (result.success) {
-                        showFlash('Task deleted successfully!', 'success');
-                        loadTasks();
-                    } else {
-                        showFlash(result.error || 'Failed to delete task');
+                    try {
+                        const result = await apiRequest(`/tasks/${taskId}`, {
+                            method: 'DELETE',
+                            body: { user_id: currentUserId }
+                        });
+
+                        if (result.success) {
+                            showFlash('Xóa công việc thành công!', 'success');
+                            loadTasks();
+                        } else {
+                            showFlash(result.error || 'Xóa công việc thất bại');
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                        }
+                    } catch (error) {
+                        showFlash('Lỗi kết nối mạng: Không thể xóa công việc!', 'error');
+                        btn.disabled = false;
+                        btn.textContent = originalText;
                     }
                 });
             });
