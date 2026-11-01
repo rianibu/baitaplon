@@ -14,6 +14,18 @@ pub struct CreateTaskPayload {
     pub content: String,
 }
 
+impl CreateTaskPayload {
+    pub fn validate(&self) -> Result<(), &'static str> {
+        if self.title.trim().is_empty() {
+            return Err("Task title cannot be empty");
+        }
+        if self.user_id <= 0 {
+            return Err("Invalid user ID");
+        }
+        Ok(())
+    }
+}
+
 #[derive(serde::Deserialize)]
 pub struct GetTasksPayload {
     pub user_id: i64,
@@ -34,6 +46,16 @@ pub async fn create_task(
     State(state): State<AppState>,
     Json(payload): Json<CreateTaskPayload>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    if let Err(err_msg) = payload.validate() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({
+                "success": false,
+                "error": err_msg
+            })),
+        );
+    }
+
     match Task::create(&state.db, payload.user_id, &payload.title, &payload.content).await {
         Ok(task) => (
             StatusCode::CREATED,
@@ -143,5 +165,56 @@ pub async fn update_task_status(
                 })),
             )
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_task_payload_valid() {
+        let payload = CreateTaskPayload {
+            user_id: 1,
+            title: "Học Rust lập trình web".to_string(),
+            content: "Luyện tập Axum và Sqlx".to_string(),
+        };
+        assert!(payload.validate().is_ok());
+    }
+
+    #[test]
+    fn test_create_task_payload_empty_title() {
+        let payload = CreateTaskPayload {
+            user_id: 1,
+            title: "".to_string(),
+            content: "Nội dung công việc".to_string(),
+        };
+        let result = payload.validate();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Task title cannot be empty");
+    }
+
+    #[test]
+    fn test_create_task_payload_whitespace_only_title() {
+        let payload = CreateTaskPayload {
+            user_id: 1,
+            title: "    \t\n  ".to_string(),
+            content: "Nội dung công việc".to_string(),
+        };
+        let result = payload.validate();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Task title cannot be empty");
+    }
+
+    #[test]
+    fn test_create_task_payload_invalid_user_id() {
+        let payload = CreateTaskPayload {
+            user_id: 0,
+            title: "Task hợp lệ".to_string(),
+            content: "".to_string(),
+        };
+        let result = payload.validate();
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Invalid user ID");
     }
 }
