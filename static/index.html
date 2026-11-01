@@ -3,110 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager</title>
+    <title>Task Manager - Quản lý công việc</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        header h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        header p {
-            color: #7f8c8d;
-        }
-        .auth-forms, .task-manager {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         .auth-forms {
-            display: none; /* Initially hidden, shown via JS */
+            display: none; /* Controlled via JS */
         }
         .task-manager {
-            display: none; /* Initially hidden, shown after login */
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            font-family: inherit;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        button.secondary {
-            background-color: #95a5a6;
-        }
-        button.secondary:hover {
-            background-color: #7f8c8d;
-        }
-        button.danger {
-            background-color: #e74c3c;
-        }
-        button.danger:hover {
-            background-color: #c0392b;
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: border-color 0.3s;
-        }
-        .tab.active {
-            border-bottom-color: #3498db;
-            color: #3498db;
-            font-weight: bold;
+            display: none; /* Controlled via JS */
         }
         .tab-panel {
             display: none;
@@ -114,145 +25,121 @@
         .tab-panel.active {
             display: block;
         }
-        .header-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        #task-list {
-            margin-top: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f8f9fa;
+        .tab.active {
+            border-bottom: 2px solid #6366f1;
+            color: #4f46e5;
             font-weight: 600;
         }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .task-actions {
-            display: flex;
-            gap: 5px;
-        }
-        .task-actions button {
-            padding: 6px 10px;
-            font-size: 14px;
-        }
-        .status-select {
-            padding: 6px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .no-tasks {
-            text-align: center;
-            color: #7f8c8d;
-            padding: 20px;
-        }
         .flash-message {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
             display: none;
         }
         .flash-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
         .flash-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #7f8c8d;
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Task Manager</h1>
-            <p>Simple task management application</p>
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+    <div class="container max-w-4xl mx-auto px-4 py-10">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-2xl shadow-lg shadow-indigo-500/25 text-white mb-3 text-2xl font-bold">
+                ✓
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Task Manager</h1>
+            <p class="text-slate-500 text-sm mt-1">Hệ thống quản lý công việc cá nhân thông minh và tối giản</p>
         </header>
 
         <!-- Flash messages -->
-        <div id="flash-message" class="flash-message"></div>
+        <div id="flash-message" class="flash-message max-w-md mx-auto mb-6 p-4 rounded-xl text-sm font-medium shadow-sm transition-all duration-300"></div>
 
         <!-- Auth forms (login/register) -->
-        <div class="auth-forms" id="auth-forms">
-            <div class="tabs">
-                <div class="tab active" data-tab="login">Login</div>
-                <div class="tab" data-tab="register">Register</div>
+        <div class="auth-forms max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100" id="auth-forms">
+            <!-- Tabs -->
+            <div class="tabs flex border-b border-slate-200 mb-6">
+                <div class="tab active flex-1 py-3 text-center cursor-pointer text-slate-500 hover:text-indigo-600 transition-colors" data-tab="login">Đăng nhập</div>
+                <div class="tab flex-1 py-3 text-center cursor-pointer text-slate-500 hover:text-indigo-600 transition-colors" data-tab="register">Đăng ký</div>
             </div>
 
+            <!-- Login Tab -->
             <div class="tab-panel active" id="login-panel">
-                <form id="login-form">
+                <form id="login-form" class="space-y-5">
                     <div class="form-group">
-                        <label for="login-username">Username</label>
-                        <input type="text" id="login-username" required>
+                        <label for="login-username" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Tên đăng nhập</label>
+                        <input type="text" id="login-username" required placeholder="Nhập username" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-slate-50/50 focus:bg-white">
                     </div>
                     <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" required>
-                        <label style="font-weight: normal; font-size: 14px; margin-top: 5px; display: inline-flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" onchange="document.getElementById('login-password').type = this.checked ? 'text' : 'password'" style="width: auto; margin-right: 5px;">
-                            Show Password
+                        <label for="login-password" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Mật khẩu</label>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-slate-50/50 focus:bg-white">
+                        <label class="mt-2.5 inline-flex items-center text-xs text-slate-500 hover:text-slate-700 cursor-pointer select-none">
+                            <input type="checkbox" onchange="document.getElementById('login-password').type = this.checked ? 'text' : 'password'" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 mr-2">
+                            Hiển thị mật khẩu
                         </label>
                     </div>
-                    <button type="submit">Login</button>
-                    <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
+                    <button type="submit" class="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.99] transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed">Đăng nhập</button>
+                    <p class="text-center text-xs text-slate-500 pt-2">Chưa có tài khoản? <a href="#" id="show-register" class="font-semibold text-indigo-600 hover:text-indigo-500">Đăng ký ngay</a></p>
                 </form>
             </div>
 
+            <!-- Register Tab -->
             <div class="tab-panel" id="register-panel">
-                <form id="register-form">
+                <form id="register-form" class="space-y-5">
                     <div class="form-group">
-                        <label for="register-username">Username</label>
-                        <input type="text" id="register-username" required>
+                        <label for="register-username" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Tên đăng nhập</label>
+                        <input type="text" id="register-username" required placeholder="Nhập username mong muốn" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-slate-50/50 focus:bg-white">
                     </div>
                     <div class="form-group">
-                        <label for="register-password">Password (must contain @)</label>
-                        <input type="password" id="register-password" required>
-                        <label style="font-weight: normal; font-size: 14px; margin-top: 5px; display: inline-flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" onchange="document.getElementById('register-password').type = this.checked ? 'text' : 'password'" style="width: auto; margin-right: 5px;">
-                            Show Password
+                        <label for="register-password" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Mật khẩu <span class="text-rose-500 font-normal lowercase">(chứa ký tự @)</span></label>
+                        <input type="password" id="register-password" required placeholder="Ví dụ: matkhau@123" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-slate-50/50 focus:bg-white">
+                        <label class="mt-2.5 inline-flex items-center text-xs text-slate-500 hover:text-slate-700 cursor-pointer select-none">
+                            <input type="checkbox" onchange="document.getElementById('register-password').type = this.checked ? 'text' : 'password'" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 mr-2">
+                            Hiển thị mật khẩu
                         </label>
                     </div>
-                    <button type="submit">Register</button>
-                    <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
+                    <button type="submit" class="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed">Đăng ký tài khoản</button>
+                    <p class="text-center text-xs text-slate-500 pt-2">Đã có tài khoản? <a href="#" id="show-login" class="font-semibold text-indigo-600 hover:text-indigo-500">Đăng nhập</a></p>
                 </form>
             </div>
         </div>
 
         <!-- Task manager (shown after login) -->
-        <div class="task-manager" id="task-manager">
-            <div class="header-controls">
-                <h2>My Tasks</h2>
-                <button id="logout-btn" class="secondary">Logout</button>
+        <div class="task-manager bg-white p-6 sm:p-8 rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100" id="task-manager">
+            <!-- Header controls -->
+            <div class="header-controls flex items-center justify-between pb-6 mb-6 border-b border-slate-100">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Danh sách công việc</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Theo dõi và cập nhật tiến độ công việc của bạn</p>
+                </div>
+                <button id="logout-btn" class="secondary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-800 active:scale-95 transition-all">
+                    <span>Đăng xuất</span>
+                </button>
             </div>
             
-            <div class="form-group">
-                <label for="task-title">Task Title</label>
-                <input type="text" id="task-title" placeholder="Enter task title">
+            <!-- Create Task Card/Form -->
+            <div class="bg-slate-50/70 p-5 rounded-xl border border-slate-200/70 mb-8 space-y-4">
+                <div class="form-group">
+                    <label for="task-title" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Tiêu đề công việc <span class="text-rose-500">*</span></label>
+                    <input type="text" id="task-title" placeholder="Ví dụ: Hoàn thiện báo cáo quý..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white">
+                </div>
+                <div class="form-group">
+                    <label for="task-content" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Chi tiết nội dung <span class="text-slate-400 font-normal lowercase">(tùy chọn)</span></label>
+                    <textarea id="task-content" rows="3" placeholder="Nhập thêm ghi chú, thời hạn, hoặc mô tả chi tiết..." class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white resize-y"></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button id="add-task-btn" class="px-5 py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-md shadow-indigo-600/20 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        + Thêm công việc
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="task-content">Task Content (optional)</label>
-                <textarea id="task-content" rows="3" placeholder="Enter task details"></textarea>
-            </div>
-            <button id="add-task-btn">Add Task</button>
-            <div id="task-list"></div>
+
+            <!-- Task List Container -->
+            <div id="task-list" class="overflow-x-auto"></div>
         </div>
     </div>
 
@@ -478,36 +365,39 @@
         // Render tasks
         function renderTasks(tasks) {
             if (tasks.length === 0) {
-                taskList.innerHTML = '<div class="no-tasks">No tasks yet. Add one above!</div>';
+                taskList.innerHTML = '<div class="no-tasks text-center py-12 px-4 rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm">Chưa có công việc nào. Hãy thêm công việc mới ở trên!</div>';
                 return;
             }
 
             const table = document.createElement('table');
+            table.className = 'w-full text-left border-collapse';
             table.innerHTML = `
                 <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Content</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                    <tr class="border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 bg-slate-50/50">
+                        <th class="py-3.5 px-4 rounded-l-xl">Tiêu đề</th>
+                        <th class="py-3.5 px-4">Nội dung</th>
+                        <th class="py-3.5 px-4">Trạng thái</th>
+                        <th class="py-3.5 px-4">Thời gian</th>
+                        <th class="py-3.5 px-4 text-right rounded-r-xl">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-100 text-sm">
                     ${tasks.map(task => `
-                        <tr>
-                            <td>${escapeHtml(task.title)}</td>
-                            <td>${escapeHtml(task.content || '')}</td>
-                            <td>
-                                <select class="status-select" data-id="${task.id}">
-                                    <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
-                                    <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                                    <option value="done" ${task.status === 'done' ? 'selected' : ''}>Done</option>
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <td class="py-3.5 px-4 font-semibold text-slate-800">${escapeHtml(task.title)}</td>
+                            <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate">${escapeHtml(task.content || '—')}</td>
+                            <td class="py-3.5 px-4">
+                                <select class="status-select text-xs font-medium py-1.5 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer" data-id="${task.id}">
+                                    <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+                                    <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🚀 In Progress</option>
+                                    <option value="done" ${task.status === 'done' ? 'selected' : ''}>✅ Done</option>
                                 </select>
                             </td>
-                            <td>${new Date(task.created_at).toLocaleString()}</td>
-                            <td class="task-actions">
-                                <button class="danger delete-btn" data-id="${task.id}">Delete</button>
+                            <td class="py-3.5 px-4 text-xs text-slate-400">${new Date(task.created_at).toLocaleString('vi-VN')}</td>
+                            <td class="py-3.5 px-4 text-right task-actions">
+                                <button class="danger delete-btn inline-flex items-center text-xs font-semibold py-1.5 px-3 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95" data-id="${task.id}">
+                                    Xóa
+                                </button>
                             </td>
                         </tr>
                     `).join('')}
